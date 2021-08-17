@@ -8,10 +8,6 @@
 #include <sdkhooks>
 #include <dhooks>
 
-// Load extensions that prevent server crashes
-#include <CSSFixes>
-#include <cleaner>
-
 public Plugin:myinfo =
 {
 	name = "FixGameUI",
