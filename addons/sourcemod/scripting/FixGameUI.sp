@@ -1,4 +1,5 @@
 #pragma semicolon 1
+#pragma newdecls required
 
 #include <sourcemod>
 #include <sdktools_entoutput>
@@ -8,19 +9,19 @@
 #include <sdkhooks>
 #include <dhooks>
 
-public Plugin:myinfo =
+Handle g_hAcceptInput = INVALID_HANDLE;
+int g_iAttachedGameUI[MAXPLAYERS + 1];
+
+public Plugin myinfo =
 {
 	name = "FixGameUI",
 	author = "hlstriker + GoD-Tony",
 	description = "Fixes game_ui entity bug.",
-	version = "1.0",
+	version = "2.0",
 	url = ""
 }
 
-new g_iAttachedGameUI[MAXPLAYERS+1];
-new Handle:g_hAcceptInput = INVALID_HANDLE;
-
-public OnPluginStart()
+public void OnPluginStart()
 {
 	HookEvent("player_death", Event_PlayerDeath, EventHookMode_Post);
 
@@ -35,7 +36,7 @@ public OnPluginStart()
 		return;
 	}
 
-	new offset = GameConfGetOffset(hConfig, "AcceptInput");
+	int offset = GameConfGetOffset(hConfig, "AcceptInput");
 	if (offset == -1)
 	{
 		SetFailState("Failed to find AcceptInput offset");
@@ -52,25 +53,27 @@ public OnPluginStart()
 
 }
 
-public Action:Event_PlayerDeath(Handle:hEvent, const String:szName[], bool:bDontBroadcast)
+public Action Event_PlayerDeath(Handle hEvent, const char[] szName, bool bDontBroadcast)
 {
-	new iClient = GetClientOfUserId(GetEventInt(hEvent, "userid"));
+	int iClient = GetClientOfUserId(GetEventInt(hEvent, "userid"));
 	RemoveFromGameUI(iClient);
 	SetClientViewEntity(iClient, iClient);
 
-	new iFlags = GetEntityFlags(iClient);
+	int iFlags = GetEntityFlags(iClient);
 	iFlags &= ~FL_ONTRAIN;
 	iFlags &= ~FL_FROZEN;
 	iFlags &= ~FL_ATCONTROLS;
 	SetEntityFlags(iClient, iFlags);
+
+	return Plugin_Continue;
 }
 
-public OnClientDisconnect(iClient)
+public void OnClientDisconnect(int iClient)
 {
 	RemoveFromGameUI(iClient);
 }
 
-public GameUI_PlayerOn(const String:szOutput[], iCaller, iActivator, Float:fDelay)
+public void GameUI_PlayerOn(const char[] szOutput, int iCaller, int iActivator, float fDelay)
 {
 	if(!(1 <= iActivator <= MaxClients))
 		return;
@@ -78,7 +81,7 @@ public GameUI_PlayerOn(const String:szOutput[], iCaller, iActivator, Float:fDela
 	g_iAttachedGameUI[iActivator] = EntIndexToEntRef(iCaller);
 }
 
-public GameUI_PlayerOff(const String:szOutput[], iCaller, iActivator, Float:fDelay)
+public void GameUI_PlayerOff(const char[] szOutput, int iCaller, int iActivator, float fDelay)
 {
 	if(!(1 <= iActivator <= MaxClients))
 		return;
@@ -86,19 +89,19 @@ public GameUI_PlayerOff(const String:szOutput[], iCaller, iActivator, Float:fDel
 	g_iAttachedGameUI[iActivator] = 0;
 }
 
-RemoveFromGameUI(iClient)
+stock void RemoveFromGameUI(int iClient)
 {
 	if(!g_iAttachedGameUI[iClient])
 		return;
 
-	new iEnt = EntRefToEntIndex(g_iAttachedGameUI[iClient]);
+	int iEnt = EntRefToEntIndex(g_iAttachedGameUI[iClient]);
 	if(iEnt == INVALID_ENT_REFERENCE)
 		return;
 
 	AcceptEntityInput(iEnt, "Deactivate", iClient, iEnt);
 }
 
-public OnEntityCreated(entity, const String:classname[])
+public void OnEntityCreated(int entity, const char[] classname)
 {
 	if (StrEqual(classname, "game_ui"))
 	{
@@ -106,14 +109,14 @@ public OnEntityCreated(entity, const String:classname[])
 	}
 }
 
-public MRESReturn:Hook_AcceptInput(thisptr, Handle:hReturn, Handle:hParams)
+public MRESReturn Hook_AcceptInput(int thisptr, Handle hReturn, Handle hParams)
 {
-	new String:sCommand[128];
+	char sCommand[128];
 	DHookGetParamString(hParams, 1, sCommand, sizeof(sCommand));
 
 	if (StrEqual(sCommand, "Deactivate"))
 	{
-		new pPlayer = GetEntPropEnt(thisptr, Prop_Data, "m_player");
+		int pPlayer = GetEntPropEnt(thisptr, Prop_Data, "m_player");
 
 		if (pPlayer == -1)
 		{
