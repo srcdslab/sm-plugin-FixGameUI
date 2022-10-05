@@ -17,7 +17,7 @@ public Plugin myinfo =
 	name = "FixGameUI",
 	author = "hlstriker + GoD-Tony",
 	description = "Fixes game_ui entity bug.",
-	version = "2.0",
+	version = "2.1",
 	url = ""
 }
 
@@ -77,6 +77,9 @@ public void GameUI_PlayerOn(const char[] szOutput, int iCaller, int iActivator, 
 {
 	if(!(1 <= iActivator <= MaxClients))
 		return;
+
+	if(iCaller >= GetMaxEntities() || iCaller < 0)
+    	return;
 
 	g_iAttachedGameUI[iActivator] = EntIndexToEntRef(iCaller);
 }
