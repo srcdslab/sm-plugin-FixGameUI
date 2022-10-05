@@ -79,7 +79,7 @@ public void GameUI_PlayerOn(const char[] szOutput, int iCaller, int iActivator, 
 		return;
 
 	if(iCaller >= GetMaxEntities() || iCaller < 0)
-    	return;
+    		return;
 
 	g_iAttachedGameUI[iActivator] = EntIndexToEntRef(iCaller);
 }
