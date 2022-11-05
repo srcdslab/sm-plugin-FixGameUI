@@ -17,7 +17,7 @@ public Plugin myinfo =
 	name = "FixGameUI",
 	author = "hlstriker + GoD-Tony",
 	description = "Fixes game_ui entity bug.",
-	version = "2.1",
+	version = "2.1.0",
 	url = ""
 }
 
