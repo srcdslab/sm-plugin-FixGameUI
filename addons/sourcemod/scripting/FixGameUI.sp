@@ -17,7 +17,7 @@ public Plugin myinfo =
 	name = "FixGameUI",
 	author = "hlstriker + GoD-Tony",
 	description = "Fixes game_ui entity bug.",
-	version = "2.1.0",
+	version = "2.2.0",
 	url = ""
 }
 
@@ -50,7 +50,17 @@ public void OnPluginStart()
 	DHookAddParam(g_hAcceptInput, HookParamType_CBaseEntity);
 	DHookAddParam(g_hAcceptInput, HookParamType_Object, 20); //varaint_t is a union of 12 (float[3]) plus two int type params 12 + 8 = 20
 	DHookAddParam(g_hAcceptInput, HookParamType_Int);
+}
 
+// Thanks to "blueblur0730" for identifying that the entities related to this bug are created before the map starts
+// It will save us from having to hook OnEntityCreated.
+public void OnMapStart()
+{
+	int entity = -1;
+	while ((entity = FindEntityByClassname(entity, "game_ui")) != -1)
+	{
+		DHookEntity(g_hAcceptInput, false, entity);
+	}
 }
 
 public Action Event_PlayerDeath(Handle hEvent, const char[] szName, bool bDontBroadcast)
@@ -104,6 +114,7 @@ stock void RemoveFromGameUI(int iClient)
 	AcceptEntityInput(iEnt, "Deactivate", iClient, iEnt);
 }
 
+/*
 public void OnEntityCreated(int entity, const char[] classname)
 {
 	if (StrEqual(classname, "game_ui"))
@@ -111,6 +122,7 @@ public void OnEntityCreated(int entity, const char[] classname)
 		DHookEntity(g_hAcceptInput, false, entity);
 	}
 }
+*/
 
 public MRESReturn Hook_AcceptInput(int thisptr, Handle hReturn, Handle hParams)
 {
