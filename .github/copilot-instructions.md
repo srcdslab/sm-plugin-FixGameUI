@@ -14,9 +14,9 @@ This repository contains a SourcePawn plugin for SourceMod that fixes a critical
 ## Technical Environment & Dependencies
 
 ### Build System
-- **Build Tool**: SourceKnight (modern SourcePawn build system)
-- **Configuration**: `sourceknight.yaml`
-- **Compiler**: SourcePawn compiler (spcomp) via SourceKnight
+- **Build Tool**: Native GitHub Actions (rumblefrog/setup-sp)
+- **Configuration**: `.github/workflows/ci.yml`
+- **Compiler**: SourcePawn compiler (spcomp) via rumblefrog/setup-sp
 - **Target Output**: `/addons/sourcemod/plugins/FixGameUI.smx`
 
 ### Dependencies
@@ -27,8 +27,7 @@ This repository contains a SourcePawn plugin for SourceMod that fixes a critical
 
 ### Build Commands
 ```bash
-# Build using SourceKnight (via CI)
-sourceknight build
+# Build using GitHub Actions CI (see .github/workflows/ci.yml)
 
 # Manual compilation (if spcomp available)
 spcomp addons/sourcemod/scripting/FixGameUI.sp
@@ -69,8 +68,7 @@ addons/sourcemod/
 
 ### Key Files
 - `FixGameUI.sp`: Main plugin implementation
-- `sourceknight.yaml`: Build configuration
-- `.github/workflows/ci.yml`: CI/CD pipeline
+- `.github/workflows/ci.yml`: CI/CD pipeline and build configuration
 - `.gitignore`: Excludes compiled plugins and build artifacts
 
 ## Plugin Architecture
@@ -132,7 +130,7 @@ if (entity == INVALID_ENT_REFERENCE)
 ## CI/CD Process
 
 ### Automated Workflow
-1. **Build**: Compiles plugin using SourceKnight action
+1. **Build**: Compiles plugin using rumblefrog/setup-sp (native GitHub Actions)
 2. **Package**: Creates release-ready package
 3. **Release**: Automatic releases on tags and main branch
 4. **Artifacts**: Uploads compiled plugins for testing
