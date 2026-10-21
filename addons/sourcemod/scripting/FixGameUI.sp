@@ -9,7 +9,7 @@
 #include <sdkhooks>
 #include <dhooks>
 
-Handle g_hAcceptInput = INVALID_HANDLE;
+DynamicHook g_hAcceptInput = null;
 int g_iAttachedGameUI[MAXPLAYERS + 1];
 
 public Plugin myinfo =
@@ -17,7 +17,7 @@ public Plugin myinfo =
 	name = "FixGameUI",
 	author = "hlstriker + GoD-Tony",
 	description = "Fixes game_ui entity bug.",
-	version = "2.2.0",
+	version = "2.2.1",
 	url = ""
 }
 
@@ -29,27 +29,27 @@ public void OnPluginStart()
 	HookEntityOutput("game_ui", "PlayerOff", GameUI_PlayerOff);
 
 	// Gamedata.
-	Handle hConfig = LoadGameConfigFile("sdktools.games");
-	if (hConfig == INVALID_HANDLE)
+	GameData hConfig = new GameData("sdktools.games");
+	if (hConfig == null)
 	{
 		SetFailState("Couldn't load sdktools game config!");
 		return;
 	}
 
-	int offset = GameConfGetOffset(hConfig, "AcceptInput");
+	int offset = hConfig.GetOffset("AcceptInput");
 	if (offset == -1)
 	{
 		SetFailState("Failed to find AcceptInput offset");
 	}
-	CloseHandle(hConfig);
+	delete hConfig;
 
 	// DHooks.
-	g_hAcceptInput = DHookCreate(offset, HookType_Entity, ReturnType_Bool, ThisPointer_CBaseEntity, Hook_AcceptInput);
-	DHookAddParam(g_hAcceptInput, HookParamType_CharPtr);
-	DHookAddParam(g_hAcceptInput, HookParamType_CBaseEntity);
-	DHookAddParam(g_hAcceptInput, HookParamType_CBaseEntity);
-	DHookAddParam(g_hAcceptInput, HookParamType_Object, 20); //varaint_t is a union of 12 (float[3]) plus two int type params 12 + 8 = 20
-	DHookAddParam(g_hAcceptInput, HookParamType_Int);
+	g_hAcceptInput = new DynamicHook(offset, HookType_Entity, ReturnType_Bool, ThisPointer_CBaseEntity);
+	g_hAcceptInput.AddParam(HookParamType_CharPtr);
+	g_hAcceptInput.AddParam(HookParamType_CBaseEntity);
+	g_hAcceptInput.AddParam(HookParamType_CBaseEntity);
+	g_hAcceptInput.AddParam(HookParamType_Object, 20); //varaint_t is a union of 12 (float[3]) plus two int type params 12 + 8 = 20
+	g_hAcceptInput.AddParam(HookParamType_Int);
 }
 
 // Thanks to "blueblur0730" for identifying that the entities related to this bug are created before the map starts
@@ -59,13 +59,13 @@ public void OnMapStart()
 	int entity = -1;
 	while ((entity = FindEntityByClassname(entity, "game_ui")) != -1)
 	{
-		DHookEntity(g_hAcceptInput, false, entity);
+		g_hAcceptInput.HookEntity(Hook_Pre, entity, Hook_AcceptInput);
 	}
 }
 
-public Action Event_PlayerDeath(Handle hEvent, const char[] szName, bool bDontBroadcast)
+public Action Event_PlayerDeath(Event hEvent, const char[] szName, bool bDontBroadcast)
 {
-	int iClient = GetClientOfUserId(GetEventInt(hEvent, "userid"));
+	int iClient = GetClientOfUserId(hEvent.GetInt("userid"));
 	RemoveFromGameUI(iClient);
 	SetClientViewEntity(iClient, iClient);
 
@@ -119,15 +119,15 @@ public void OnEntityCreated(int entity, const char[] classname)
 {
 	if (StrEqual(classname, "game_ui"))
 	{
-		DHookEntity(g_hAcceptInput, false, entity);
+		g_hAcceptInput.HookEntity(Hook_Pre, entity, Hook_AcceptInput);
 	}
 }
 */
 
-public MRESReturn Hook_AcceptInput(int thisptr, Handle hReturn, Handle hParams)
+public MRESReturn Hook_AcceptInput(int thisptr, DHookReturn hReturn, DHookParam hParams)
 {
 	char sCommand[128];
-	DHookGetParamString(hParams, 1, sCommand, sizeof(sCommand));
+	hParams.GetString(1, sCommand, sizeof(sCommand));
 
 	if (StrEqual(sCommand, "Deactivate"))
 	{
@@ -138,11 +138,11 @@ public MRESReturn Hook_AcceptInput(int thisptr, Handle hReturn, Handle hParams)
 			// Manually disable think.
 			SetEntProp(thisptr, Prop_Data, "m_nNextThinkTick", -1);
 
-			DHookSetReturn(hReturn, false);
+			hReturn.Value = false;
 			return MRES_Supercede;
 		}
 	}
 
-	DHookSetReturn(hReturn, true);
+	hReturn.Value = true;
 	return MRES_Ignored;
 }
